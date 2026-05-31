@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -17,39 +16,41 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleLogin = async () => {
+    setErrorMessage('');
+
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Missing information', 'Please enter your email and password.');
+      setErrorMessage('Please enter your email and password.');
       return;
     }
 
     try {
       setLoading(true);
-      console.log('Trying login...');
 
       const response = await api.post('/auth/login', {
         email,
         password,
       });
 
-      console.log('Step 1: login response', response.data);
       const token = response.data.token;
+      const name = response.data.user?.name || '';
 
-      console.log('Step 2: saving token...');
-      await SecureStore.setItemAsync('token', token);
+      if (Platform.OS === 'web') {
+        localStorage.setItem('token', token);
+        localStorage.setItem('name', name);
+      } else {
+        await SecureStore.setItemAsync('token', token);
+        await SecureStore.setItemAsync('name', name);
+      }
 
-      console.log('Step 3: setting auth token...');
       setAuthToken(token);
-
-      console.log('Step 4: navigating...');
       router.replace('/');
-
-      console.log('Step 5: navigation called');
     } catch (error: any) {
       const message =
         error?.response?.data?.message || 'Login failed. Please try again.';
-      Alert.alert('Error', message);
+      setErrorMessage(message);
     } finally {
       setLoading(false);
     }
@@ -68,7 +69,10 @@ export default function LoginScreen() {
           <Text style={styles.label}>Email</Text>
           <TextInput
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(text) => {
+              setEmail(text);
+              if (errorMessage) setErrorMessage('');
+            }}
             placeholder="you@example.com"
             keyboardType="email-address"
             autoCapitalize="none"
@@ -80,12 +84,17 @@ export default function LoginScreen() {
           <Text style={styles.label}>Password</Text>
           <TextInput
             value={password}
-            onChangeText={setPassword}
+            onChangeText={(text) => {
+              setPassword(text);
+              if (errorMessage) setErrorMessage('');
+            }}
             placeholder="Enter your password"
             secureTextEntry
             style={styles.input}
           />
         </View>
+
+        {!!errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
 
         <Pressable style={styles.button} onPress={handleLogin} disabled={loading}>
           <Text style={styles.buttonText}>
@@ -153,6 +162,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     backgroundColor: '#fff',
     fontSize: 16,
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: 14,
+    marginBottom: 12,
+    textAlign: 'center',
+    fontWeight: '600',
   },
   button: {
     backgroundColor: '#102a6b',

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -17,15 +16,20 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleRegister = async () => {
+    setErrorMessage('');
+    setSuccessMessage('');
+
     if (!name.trim() || !email.trim() || !password.trim()) {
-      Alert.alert('Missing information', 'Please complete all fields.');
+      setErrorMessage('Please complete all fields.');
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert('Weak password', 'Password should be at least 6 characters.');
+      setErrorMessage('Password should be at least 6 characters.');
       return;
     }
 
@@ -38,12 +42,15 @@ export default function RegisterScreen() {
         password,
       });
 
-      Alert.alert('Success', 'Account created successfully.');
-      router.replace('/login');
+      setSuccessMessage('Account created successfully.');
+
+      setTimeout(() => {
+        router.replace('/login');
+      }, 800);
     } catch (error: any) {
       const message =
         error?.response?.data?.message || 'Registration failed. Please try again.';
-      Alert.alert('Error', message);
+      setErrorMessage(message);
     } finally {
       setLoading(false);
     }
@@ -62,7 +69,10 @@ export default function RegisterScreen() {
           <Text style={styles.label}>Full Name</Text>
           <TextInput
             value={name}
-            onChangeText={setName}
+            onChangeText={(text) => {
+              setName(text);
+              if (errorMessage) setErrorMessage('');
+            }}
             placeholder="Your full name"
             style={styles.input}
           />
@@ -72,7 +82,10 @@ export default function RegisterScreen() {
           <Text style={styles.label}>Email</Text>
           <TextInput
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(text) => {
+              setEmail(text);
+              if (errorMessage) setErrorMessage('');
+            }}
             placeholder="you@example.com"
             keyboardType="email-address"
             autoCapitalize="none"
@@ -84,12 +97,18 @@ export default function RegisterScreen() {
           <Text style={styles.label}>Password</Text>
           <TextInput
             value={password}
-            onChangeText={setPassword}
+            onChangeText={(text) => {
+              setPassword(text);
+              if (errorMessage) setErrorMessage('');
+            }}
             placeholder="Create a password"
             secureTextEntry
             style={styles.input}
           />
         </View>
+
+        {!!errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
+        {!!successMessage && <Text style={styles.successText}>{successMessage}</Text>}
 
         <Pressable style={styles.button} onPress={handleRegister} disabled={loading}>
           <Text style={styles.buttonText}>
@@ -157,6 +176,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     backgroundColor: '#fff',
     fontSize: 16,
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: 14,
+    marginBottom: 12,
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+  successText: {
+    color: '#16a34a',
+    fontSize: 14,
+    marginBottom: 12,
+    textAlign: 'center',
+    fontWeight: '600',
   },
   button: {
     backgroundColor: '#102a6b',

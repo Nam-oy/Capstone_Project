@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -24,11 +25,19 @@ export default function InterviewScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     const loadQuestions = async () => {
       try {
-        const token = await SecureStore.getItemAsync('token');
+        let token: string | null = null;
+
+        if (Platform.OS === 'web') {
+          token = localStorage.getItem('token');
+        } else {
+          token = await SecureStore.getItemAsync('token');
+        }
+
         setAuthToken(token);
 
         const response = await api.post('/interview/generate', { role });
@@ -39,7 +48,7 @@ export default function InterviewScreen() {
       } catch (error: any) {
         const message =
           error?.response?.data?.message || 'Failed to load interview questions.';
-        Alert.alert('Error', message);
+        setErrorMessage(message);
       } finally {
         setLoading(false);
       }
@@ -55,8 +64,10 @@ export default function InterviewScreen() {
   };
 
   const handleNextOrSubmit = async () => {
+    setErrorMessage('');
+
     if (!answers[currentIndex]?.trim()) {
-      Alert.alert('Missing answer', 'Please enter your answer before continuing.');
+      setErrorMessage('Please enter your answer before continuing.');
       return;
     }
 
@@ -68,7 +79,14 @@ export default function InterviewScreen() {
     try {
       setSubmitting(true);
 
-      const token = await SecureStore.getItemAsync('token');
+      let token: string | null = null;
+
+      if (Platform.OS === 'web') {
+        token = localStorage.getItem('token');
+      } else {
+        token = await SecureStore.getItemAsync('token');
+      }
+
       setAuthToken(token);
 
       const response = await api.post('/interview/evaluate', {
@@ -80,7 +98,7 @@ export default function InterviewScreen() {
       const feedback = response.data.feedback || [];
 
       if (!feedback.length) {
-        Alert.alert('Error', 'No feedback was returned.');
+        setErrorMessage('No feedback was returned.');
         return;
       }
 
@@ -100,7 +118,7 @@ export default function InterviewScreen() {
     } catch (error: any) {
       const message =
         error?.response?.data?.message || 'Failed to submit interview answers.';
-      Alert.alert('Error', message);
+      setErrorMessage(message);
     } finally {
       setSubmitting(false);
     }
@@ -117,7 +135,9 @@ export default function InterviewScreen() {
   if (!questions.length) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.loadingText}>No questions available.</Text>
+        <Text style={styles.loadingText}>
+          {errorMessage || 'No questions available.'}
+        </Text>
       </View>
     );
   }
@@ -150,6 +170,8 @@ export default function InterviewScreen() {
         />
       </View>
 
+      {!!errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
+
       <Pressable style={styles.primaryButton} onPress={handleNextOrSubmit} disabled={submitting}>
         <Text style={styles.primaryButtonText}>
           {submitting
@@ -175,6 +197,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#102a6b',
     fontWeight: '600',
+    textAlign: 'center',
   },
   container: {
     padding: 24,
@@ -226,7 +249,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderRadius: 18,
     padding: 20,
-    marginBottom: 24,
+    marginBottom: 16,
   },
   answerLabel: {
     fontSize: 14,
@@ -242,6 +265,13 @@ const styles = StyleSheet.create({
     padding: 14,
     fontSize: 16,
     backgroundColor: '#fff',
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: 14,
+    marginBottom: 12,
+    textAlign: 'center',
+    fontWeight: '600',
   },
   primaryButton: {
     backgroundColor: '#102a6b',

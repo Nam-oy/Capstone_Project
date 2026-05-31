@@ -33,4 +33,21 @@ router.get('/:id', authMiddleware, async (req, res) => {
   }
 });
 
+router.delete('/:id', authMiddleware, async (req, res) => {
+  try {
+    const deletedSession = await InterviewSession.findOneAndDelete({
+      _id: req.params.id,
+      userId: req.user.userId,
+    });
+
+    if (!deletedSession) {
+      return res.status(404).json({ message: 'Session not found.' });
+    }
+
+    return res.json({ message: 'Session deleted successfully.' });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;

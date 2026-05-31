@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -70,7 +71,14 @@ export default function SessionDetailScreen() {
   useEffect(() => {
     const loadSession = async () => {
       try {
-        const token = await SecureStore.getItemAsync('token');
+        let token: string | null = null;
+
+        if (Platform.OS === 'web') {
+          token = localStorage.getItem('token');
+        } else {
+          token = await SecureStore.getItemAsync('token');
+        }
+
         setAuthToken(token);
 
         const response = await api.get(`/history/${sessionId}`);
@@ -78,7 +86,11 @@ export default function SessionDetailScreen() {
       } catch (error: any) {
         const message =
           error?.response?.data?.message || 'Failed to load session details.';
-        Alert.alert('Error', message);
+        if (Platform.OS === 'web') {
+          console.log(message);
+        } else {
+          Alert.alert('Error', message);
+        }
       } finally {
         setLoading(false);
       }
@@ -287,6 +299,7 @@ const styles = StyleSheet.create({
     color: '#102a6b',
     fontWeight: '600',
     marginBottom: 16,
+    textAlign: 'center',
   },
   container: {
     padding: 24,

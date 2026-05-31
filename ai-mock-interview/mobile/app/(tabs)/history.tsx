@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Alert,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import api, { setAuthToken } from '../../services/api';
@@ -19,23 +27,33 @@ type SessionItem = {
 export default function HistoryScreen() {
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const loadHistory = async () => {
+    try {
+      setErrorMessage('');
+
+      let token: string | null = null;
+
+      if (Platform.OS === 'web') {
+        token = localStorage.getItem('token');
+      } else {
+        token = await SecureStore.getItemAsync('token');
+      }
+
+      setAuthToken(token);
+
+      const response = await api.get('/history');
+      setSessions(response.data || []);
+    } catch (error: any) {
+      const message = error?.response?.data?.message || 'Failed to load history.';
+      setErrorMessage(message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadHistory = async () => {
-      try {
-        const token = await SecureStore.getItemAsync('token');
-        setAuthToken(token);
-
-        const response = await api.get('/history');
-        setSessions(response.data || []);
-      } catch (error: any) {
-        const message = error?.response?.data?.message || 'Failed to load history.';
-        Alert.alert('Error', message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadHistory();
   }, []);
 
@@ -44,6 +62,47 @@ export default function HistoryScreen() {
       pathname: '/session-detail',
       params: { id: session._id },
     });
+  };
+
+  const performDelete = async (sessionId: string) => {
+    try {
+      let token: string | null = null;
+
+      if (Platform.OS === 'web') {
+        token = localStorage.getItem('token');
+      } else {
+        token = await SecureStore.getItemAsync('token');
+      }
+
+      setAuthToken(token);
+
+      await api.delete(`/history/${sessionId}`);
+      setSessions((prev) => prev.filter((session) => session._id !== sessionId));
+    } catch (error: any) {
+      const message = error?.response?.data?.message || 'Failed to delete session.';
+      setErrorMessage(message);
+    }
+  };
+
+  const handleDeleteSession = (sessionId: string) => {
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm('Do you want to delete this session?');
+      if (confirmed) {
+        performDelete(sessionId);
+      }
+      return;
+    }
+
+    Alert.alert('Delete Session', 'Do you want to delete this session?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => {
+          performDelete(sessionId);
+        },
+      },
+    ]);
   };
 
   if (loading) {
@@ -58,6 +117,8 @@ export default function HistoryScreen() {
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Session History</Text>
       <Text style={styles.subtitle}>Review your previous interview practice sessions</Text>
+
+      {!!errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
 
       {!sessions.length ? (
         <View style={styles.emptyCard}>
@@ -81,15 +142,27 @@ export default function HistoryScreen() {
               style={styles.card}
               onPress={() => handleOpenSession(session)}
             >
-              <View>
+              <View style={styles.cardLeft}>
                 <Text style={styles.cardTitle}>{session.role}</Text>
                 <Text style={styles.cardDate}>
                   {new Date(session.createdAt).toLocaleDateString()}
                 </Text>
               </View>
 
-              <View style={styles.scoreBox}>
-                <Text style={styles.scoreText}>{score}/100</Text>
+              <View style={styles.cardRight}>
+                <View style={styles.scoreBox}>
+                  <Text style={styles.scoreText}>{score}/100</Text>
+                </View>
+
+                <Pressable
+                  style={styles.deleteButton}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    handleDeleteSession(session._id);
+                  }}
+                >
+                  <Text style={styles.deleteButtonText}>Delete</Text>
+                </Pressable>
               </View>
             </Pressable>
           );
@@ -129,6 +202,13 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 24,
   },
+  errorText: {
+    color: '#dc2626',
+    fontSize: 14,
+    marginBottom: 12,
+    textAlign: 'center',
+    fontWeight: '600',
+  },
   emptyCard: {
     backgroundColor: '#ffffff',
     borderRadius: 18,
@@ -152,6 +232,15 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
+  cardLeft: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  cardRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   cardTitle: {
     fontSize: 17,
     fontWeight: '700',
@@ -167,10 +256,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 12,
+    minWidth: 78,
+    alignItems: 'center',
   },
   scoreText: {
     fontSize: 15,
     fontWeight: '700',
     color: '#102a6b',
+  },
+  deleteButton: {
+    backgroundColor: '#ef4444',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  deleteButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 import { Redirect } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { setAuthToken } from '../services/api';
@@ -11,7 +11,13 @@ export default function IndexScreen() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const token = await SecureStore.getItemAsync('token');
+        let token: string | null = null;
+
+        if (Platform.OS === 'web') {
+          token = localStorage.getItem('token');
+        } else {
+          token = await SecureStore.getItemAsync('token');
+        }
 
         if (token) {
           setAuthToken(token);

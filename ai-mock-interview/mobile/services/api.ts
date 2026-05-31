@@ -1,8 +1,10 @@
 import axios from 'axios';
+import { Platform } from 'react-native';
 
-// Change this later to your computer's local IP if testing on a real phone
-// Example: http://192.168.1.10:5000/api
-const BASE_URL = 'http://192.168.4.97:5001/api';
+const BASE_URL =
+  Platform.OS === 'web'
+    ? 'http://localhost:5001/api'
+    : 'http://192.168.4.97:5001/api';
 
 const api = axios.create({
   baseURL: BASE_URL,

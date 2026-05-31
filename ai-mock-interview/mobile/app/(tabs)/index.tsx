@@ -1,20 +1,61 @@
-import React from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { setAuthToken } from '../../services/api';
 
 export default function HomeScreen() {
+  const [userName, setUserName] = useState('');
+
+  useEffect(() => {
+    const loadUserName = async () => {
+      try {
+        let name: string | null = null;
+
+        if (Platform.OS === 'web') {
+          name = localStorage.getItem('name');
+        } else {
+          name = await SecureStore.getItemAsync('name');
+        }
+
+        setUserName(name || '');
+      } catch (error) {
+        setUserName('');
+      }
+    };
+
+    loadUserName();
+  }, []);
+
+  const performLogout = async () => {
+    if (Platform.OS === 'web') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('name');
+    } else {
+      await SecureStore.deleteItemAsync('token');
+      await SecureStore.deleteItemAsync('name');
+    }
+
+    setAuthToken(null);
+    router.replace('/login');
+  };
+
   const handleLogout = async () => {
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm('Do you want to sign out?');
+      if (confirmed) {
+        await performLogout();
+      }
+      return;
+    }
+
     Alert.alert('Logout', 'Do you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Logout',
         style: 'destructive',
-        onPress: async () => {
-          await SecureStore.deleteItemAsync('token');
-          setAuthToken(null);
-          router.replace('/login');
+        onPress: () => {
+          performLogout();
         },
       },
     ]);
@@ -26,7 +67,9 @@ export default function HomeScreen() {
       <Text style={styles.subtitle}>Practice smarter. Interview better.</Text>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Welcome</Text>
+        <Text style={styles.cardTitle}>
+          Welcome{userName ? `, ${userName}` : ''}
+        </Text>
         <Text style={styles.cardText}>
           This app helps you practice role-specific interview questions, receive AI
           feedback, and review your past sessions.

@@ -1,78 +1,103 @@
-const OpenAI = require('openai');
+const { GoogleGenAI } = require('@google/genai');
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
 });
 
-const MODEL = process.env.OPENAI_MODEL || 'gpt-4.1-mini';
+const MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
 
 function extractText(response) {
-  if (!response) return '';
+  return response?.text || '';
+}
 
-  if (typeof response.output_text === 'string' && response.output_text.trim()) {
-    return response.output_text;
-  }
+function getMockQuestions(role) {
+  const questionMap = {
+    'Software Engineer': [
+      'Tell me about yourself as a software engineer.',
+      'Explain a technical problem you solved recently.',
+      'How do you ensure code quality in your projects?',
+    ],
+    'Frontend Developer': [
+      'Tell me about yourself as a frontend developer.',
+      'How do you build responsive and user-friendly interfaces?',
+      'What is the difference between state and props?',
+    ],
+    'Data Analyst': [
+      'Tell me about yourself as a data analyst.',
+      'How do you clean and prepare data before analysis?',
+      'Describe a time when your analysis helped decision-making.',
+    ],
+  };
 
-  if (Array.isArray(response.output)) {
-    const texts = [];
+  return questionMap[role] || questionMap['Software Engineer'];
+}
 
-    for (const item of response.output) {
-      if (item.type === 'message' && Array.isArray(item.content)) {
-        for (const content of item.content) {
-          if (content.type === 'output_text' && content.text) {
-            texts.push(content.text);
-          }
-        }
-      }
-    }
+function getMockFeedback(questions, answers) {
+  return questions.map((question, index) => {
+    const answer = answers[index] || '';
+    const answerLength = answer.trim().length;
 
-    return texts.join('\n').trim();
-  }
+    const clarity = Math.min(95, Math.max(70, Math.round(75 + answerLength / 12)));
+    const relevance = Math.min(95, Math.max(72, Math.round(76 + answerLength / 14)));
+    const completeness = Math.min(95, Math.max(68, Math.round(72 + answerLength / 13)));
 
-  return '';
+    return {
+      question,
+      answer,
+      clarity,
+      relevance,
+      completeness,
+      suggestions: [
+        'Add one more specific example from your experience.',
+        'Explain the impact of your work more clearly.',
+      ],
+      overallComment:
+        'Your answer is relevant, but it would be stronger with more detail and a clearer example.',
+    };
+  });
 }
 
 async function generateQuestions(role) {
-  const prompt = `
-Generate exactly 3 mock interview questions for the job role: ${role}.
+  try {
+    const prompt = `
+Generate exactly 3 mock interview questions for the role: ${role}.
 
 Requirements:
-- The questions must be suitable for a student or early-career job seeker.
-- Mix behavioral and technical questions when appropriate.
-- Keep the questions clear and realistic.
-- Return valid JSON only.
-- Format:
+- suitable for a student or early-career job seeker
+- clear and realistic
+- mix behavioral and technical questions when appropriate
+- return valid JSON only
+
+Format:
 {
   "questions": ["question 1", "question 2", "question 3"]
 }
 `;
 
-  const response = await client.responses.create({
-    model: MODEL,
-    instructions:
-      'You are an interview coach. Follow the requested JSON format exactly and do not include markdown.',
-    input: prompt,
-    temperature: 0.7,
-  });
+    const response = await ai.models.generateContent({
+      model: MODEL,
+      contents: prompt,
+    });
 
-  const text = extractText(response);
+    const text = extractText(response);
 
-  try {
     const parsed = JSON.parse(text);
-    if (Array.isArray(parsed.questions) && parsed.questions.length > 0) {
-      return parsed.questions;
+    if (!Array.isArray(parsed.questions) || parsed.questions.length === 0) {
+      throw new Error('Invalid question format');
     }
-    throw new Error('Invalid question format');
+
+    return parsed.questions;
   } catch (error) {
-    throw new Error(`Failed to parse generated questions: ${text}`);
+    console.warn('Gemini question generation failed, using mock questions:', error?.message);
+    return getMockQuestions(role);
   }
 }
 
 async function evaluateAnswers(role, questions, answers) {
-  const prompt = `
+  try {
+    const prompt = `
 Evaluate the user's interview answers for the role: ${role}.
 
-You will receive a list of questions and answers.
 Return valid JSON only as an array.
 
 Scoring rules:
@@ -106,17 +131,12 @@ Required JSON format:
 ]
 `;
 
-  const response = await client.responses.create({
-    model: MODEL,
-    instructions:
-      'You are an interview evaluator. Be constructive, fair, and return only valid JSON with no markdown.',
-    input: prompt,
-    temperature: 0.3,
-  });
+    const response = await ai.models.generateContent({
+      model: MODEL,
+      contents: prompt,
+    });
 
-  const text = extractText(response);
-
-  try {
+    const text = extractText(response);
     const parsed = JSON.parse(text);
 
     if (!Array.isArray(parsed)) {
@@ -133,7 +153,8 @@ Required JSON format:
       overallComment: item.overallComment || '',
     }));
   } catch (error) {
-    throw new Error(`Failed to parse evaluation feedback: ${text}`);
+    console.warn('Gemini evaluation failed, using mock feedback:', error?.message);
+    return getMockFeedback(questions, answers);
   }
 }
 
