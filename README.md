@@ -231,47 +231,29 @@ This allows users to review previous interview performance and continue practici
 
 ## Screenshots
 
-Add your screenshots here after uploading them to the repository.
-
-Example section:
-
-### Login Page
-`screenshots/login.png`
-
-### Register Page
-`screenshots/register.png`
-
-### Home Page
-`screenshots/home.png`
-
-### Role Selection Page
-`screenshots/roles.png`
-
-### Interview Page
-`screenshots/interview.png`
-
-### Feedback Page
-`screenshots/feedback.png`
-
-### History Page
-`screenshots/history.png`
-
-### Session Detail Page
-`screenshots/session-detail.png`
-
-You can later format them like this:
-
-```md
-## Screenshots
-
 ### Login
-![Login Page](screenshots/login.png)
+<img src="screenshots/login.png" alt="Login Page" width="350" />
 
 ### Register
-![Register Page](screenshots/register.png)
+<img src="screenshots/register.png" alt="Register Page" width="350" />
 
 ### Home
-![Home Page](screenshots/home.png)
+<img src="screenshots/home.png" alt="Home Page" width="350" />
+
+### Role Selection
+<img src="screenshots/roles.png" alt="Role Selection Page" width="350" />
+
+### Interview
+<img src="screenshots/interview.png" alt="Interview Page" width="350" />
+
+### Feedback
+<img src="screenshots/feedback.png" alt="Feedback Page" width="350" />
+
+### History
+<img src="screenshots/history.png" alt="History Page" width="350" />
+
+### Session Detail
+<img src="screenshots/session-detail.png" alt="Session Detail Page" width="350" />
 ```
 
 ---
