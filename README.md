@@ -1,20 +1,35 @@
-# Capstone-Project
-CS687- Computer Science Capstone
-
 # InterVue AI
 
-InterVue AI is a mobile-first mock interview application designed to help students and job seekers practice interview questions, receive automated feedback, and review their past interview sessions. The system supports user authentication, role-based interview generation, answer evaluation, feedback review, and session history tracking.
+InterVue AI is a mobile-first mock interview application that helps students and job seekers practice interview questions, receive structured feedback, and review previous interview sessions. The project was developed as a capstone application with a focus on practical interview preparation, role-based question generation, answer evaluation, and session history tracking.
+
+## Overview
+
+The application allows users to:
+- create an account and log in securely
+- select a target job role
+- practice role-based mock interview questions
+- receive structured feedback on their answers
+- review previous interview sessions
+- revisit detailed feedback for each session
+- retake interviews for additional practice
+
+The system is designed to support both web and mobile use.
+
+---
 
 ## Features
 
 - User registration and login
-- Role-based mock interview questions
-- AI-generated interview feedback
-- Interview session history
-- Session detail review
+- Role-based interview practice
+- AI-supported question generation and answer evaluation
+- Structured feedback with scoring
+- Session history tracking
+- Detailed session review
 - Retake interview flow
 - Delete session history
 - Web and mobile support
+
+---
 
 ## Tech Stack
 
@@ -32,7 +47,10 @@ InterVue AI is a mobile-first mock interview application designed to help studen
 - JWT Authentication
 
 ### AI Integration
-- Gemini API or fallback mock evaluation
+- Gemini API
+- Optional fallback mock evaluation
+
+---
 
 ## Project Structure
 
@@ -68,118 +86,269 @@ ai-mock-interview/
 │   │   └── aiService.js
 │   └── .env
 └── README.md
+```
 
+---
 
+## Installation
 
+### 1. Clone the repository
 
-
-
-Installation
-
-1. Clone the repository
+```bash
 git clone <your-repository-url>
 cd ai-mock-interview
-2. Install backend dependencies
+```
+
+### 2. Install backend dependencies
+
+```bash
 cd server
 npm install
-3. Install frontend dependencies
+```
+
+### 3. Install frontend dependencies
+
+```bash
 cd ../mobile
 npm install
-Environment Variables
+```
 
-Create a .env file inside the server folder.
+---
 
-Example
+## Environment Variables
+
+Create a `.env` file inside the `server` folder.
+
+### Example
+
+```env
 PORT=5001
 MONGODB_URI=mongodb://127.0.0.1:27017/ai_mock_interview
 JWT_SECRET=your_super_secret_key_123
 GEMINI_API_KEY=your_gemini_api_key_here
 GEMINI_MODEL=gemini-2.5-flash
+```
 
-If you are using OpenAI instead of Gemini, replace the AI variables accordingly.
+If you use a different AI provider, update the AI-related variables accordingly.
 
-Running the Project
-Start the backend
+---
+
+## Running the Project
+
+### Start the backend
+
+```bash
 cd server
 npm run dev
-Start the frontend
+```
+
+### Start the frontend
+
+```bash
 cd mobile
 npx expo start
-Run on web
+```
+
+### Run on web
 
 Press:
 
+```bash
 w
-Run on mobile
-Use Expo Go
-Make sure your phone and computer are on the same Wi-Fi
-Update mobile/services/api.ts with your computer's local IP address if testing on a real phone
+```
+
+or run directly:
+
+```bash
+npx expo start --web
+```
+
+### Run on mobile
+
+Use Expo Go on your phone.
+
+If testing on a real phone, update `mobile/services/api.ts` to use your computer’s local IP address.
 
 Example:
 
+```ts
 const BASE_URL = 'http://192.168.1.23:5001/api';
-API Endpoints
-Auth
-POST /api/auth/register
-POST /api/auth/login
-Interview
-POST /api/interview/generate
-POST /api/interview/evaluate
-History
-GET /api/history
-GET /api/history/:id
-DELETE /api/history/:id
-Main Workflow
-User registers or logs in
-User selects a target job role
-The system generates interview questions
-The user submits answers
-The system evaluates answers and returns feedback
-The session is saved in MongoDB
-The user can review session history and details later
-Database Usage
+```
 
-MongoDB is used as the main database for the system. It stores:
+For web on the same machine, `localhost` is fine:
 
-User accounts
-Interview sessions
-Selected roles
-Generated questions
-User answers
-AI feedback
-Session history
-Current MVP Scope
+```ts
+const BASE_URL = 'http://localhost:5001/api';
+```
+
+---
+
+## API Endpoints
+
+### Authentication
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+
+### Interview
+- `POST /api/interview/generate`
+- `POST /api/interview/evaluate`
+
+### History
+- `GET /api/history`
+- `GET /api/history/:id`
+- `DELETE /api/history/:id`
+
+---
+
+## Main Workflow
+
+1. The user registers or logs in
+2. The user selects a target job role
+3. The system generates role-based interview questions
+4. The user submits text-based answers
+5. The system evaluates the answers and returns structured feedback
+6. The session is saved in MongoDB
+7. The user can review past sessions in the history page
+8. The user can open detailed session feedback and retake the interview
+
+---
+
+## Database Usage
+
+MongoDB is used as the main database of the system. It stores:
+
+- user accounts
+- selected job roles
+- interview questions
+- submitted answers
+- AI feedback
+- session history
+- detailed session records
+
+This allows users to review previous interview performance and continue practicing over time.
+
+---
+
+## Screenshots
+
+Add your screenshots here after uploading them to the repository.
+
+Example section:
+
+### Login Page
+`screenshots/login.png`
+
+### Register Page
+`screenshots/register.png`
+
+### Home Page
+`screenshots/home.png`
+
+### Role Selection Page
+`screenshots/roles.png`
+
+### Interview Page
+`screenshots/interview.png`
+
+### Feedback Page
+`screenshots/feedback.png`
+
+### History Page
+`screenshots/history.png`
+
+### Session Detail Page
+`screenshots/session-detail.png`
+
+You can later format them like this:
+
+```md
+## Screenshots
+
+### Login
+![Login Page](screenshots/login.png)
+
+### Register
+![Register Page](screenshots/register.png)
+
+### Home
+![Home Page](screenshots/home.png)
+```
+
+---
+
+## How to Demo
+
+A simple demo flow for presentation:
+
+1. Open the application
+2. Register a new user account
+3. Log in with the created account
+4. Show the home page
+5. Go to the roles page
+6. Select a role
+7. Answer the generated interview questions
+8. Submit the answers
+9. Show the feedback page
+10. Open the history page
+11. Open a session detail page
+12. Demonstrate retake interview
+13. Demonstrate delete session history
+14. Log out
+
+---
+
+## Web and Mobile Notes
+
+- Web uses `localStorage` for token persistence
+- Mobile uses `SecureStore`
+- For web testing, use `localhost`
+- For real phone testing, use your computer’s local IP address
+
+---
+
+## Current MVP Scope
 
 The current MVP includes:
 
-Authentication
-Role selection
-Interview generation
-Answer submission
-AI-based or mock evaluation
-Feedback display
-History tracking
-Session detail review
-Delete session history
-Future Improvements
+- user authentication
+- role selection
+- interview question generation
+- answer submission
+- structured feedback
+- session history
+- session detail review
+- retake interview
+- delete session history
+
+---
+
+## Future Improvements
 
 Possible future improvements include:
 
-Forgot password
-Profile management
-Better analytics dashboard
-More job roles
-More advanced AI evaluation
-Export feedback summary
-Favorite interview sessions
-Notes
-Web uses localStorage for token persistence
-Mobile uses SecureStore
-If AI quota is unavailable, the system can use fallback mock questions and feedback
-Author
+- forgot password
+- profile management
+- email verification
+- additional job roles
+- improved analytics dashboard
+- export feedback summary
+- favorite interview sessions
 
-Siraphat Mingsorn
+---
 
-License
+## Notes
 
-This project is for educational and capstone purposes.
+- If AI quota or API access becomes unavailable, the system can be extended with a fallback mock evaluation mode
+- The project is intended for educational and capstone purposes
+
+---
+
+## Author
+
+**Siraphat Mingsorn**
+
+---
+
+## License
+
+This project is for educational and academic use.
